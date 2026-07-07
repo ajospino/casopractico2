@@ -27,7 +27,15 @@ resource "azurerm_network_interface" "nic" {
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Static"
     private_ip_address            = "10.0.0.2"
+    public_ip_address_id          = azurerm_public_ip.app-public-ip.id
   }
+}
+
+resource "azurerm_public_ip" "app-public-ip" {
+  name                = "cp2-app-vm-ip"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  allocation_method   = "Static"
 }
 
 resource "azurerm_linux_virtual_machine" "app-vm" {
@@ -42,7 +50,7 @@ resource "azurerm_linux_virtual_machine" "app-vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("~/.ssh/AZ-cp2-keys.pem")
+    public_key = file(".ssh/az-public-key.pem")
   }
 
   os_disk {

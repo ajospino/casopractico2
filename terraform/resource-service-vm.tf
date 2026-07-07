@@ -8,11 +8,19 @@ resource "azurerm_network_interface" "service-nic" {
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Static"
     private_ip_address            = "10.0.0.4"
+    public_ip_address_id          = azurerm_public_ip.service-public-ip.id
   }
 }
 
+resource "azurerm_public_ip" "service-public-ip" {
+  name                = "cp2-service-vm-ip"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  allocation_method   = "Static"
+}
+
 resource "azurerm_linux_virtual_machine" "service-vm" {
-  name                = local.vm_name
+  name                = format("%s/%s","service-",local.vm_name)
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   size                = "Standard_E2s_v3"
@@ -23,7 +31,7 @@ resource "azurerm_linux_virtual_machine" "service-vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("~/.ssh/AZ-cp2-keys.pem")
+    public_key = file(".ssh/az-public-key.pem")
   }
 
   os_disk {
