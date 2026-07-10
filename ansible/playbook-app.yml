@@ -3,4 +3,16 @@
   remote-user: azureuser
   become: true
   tasks:
-  - name: 'Prepare VM'
+    - name: 'Install podman'
+      ansible.builtin.apt:
+        name: podman=4.9.3+ds1-1ubuntu0.2
+        state: present
+        update_cache: true
+    
+    - name: 'Login to ACR'
+      ansible.builtin.command:
+        cmd: podman login cp2-registry.azurecr.io -u cp2-registry -p var.acrPassword
+    
+    - name: 'Obtain App image'
+      ansible.builtin.command:
+        cmd: podman pull cp2-registry.azurecr.io/techsavies:1.0.0
