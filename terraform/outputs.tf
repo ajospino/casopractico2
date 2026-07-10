@@ -10,6 +10,10 @@ output "service-vm_id" {
   value = azurerm_linux_virtual_machine.service-vm.id
 }
 
+output "general-acr_login-server" {
+  value = azurerm_container_registry.general-acr.login_server
+}
+
 resource "local_file" "inventory-output" {
   content = templatefile("${path.module}/inventory.tpl",
     {
@@ -18,4 +22,15 @@ resource "local_file" "inventory-output" {
     }
   )
   filename = "../ansible/inventory"
+}
+
+resource "local_file" "acr-output" {
+  content = templatefile("${path.module}/acr-output.tpl",
+    {
+      acr_login_url = azurerm_container_registry.general-acr.login_server
+      acr_user = azurerm_container_registry.general-acr.admin_username
+      acr_password = azurerm_container_registry.general-acr.admin_password
+    }
+  )
+  filename = "../ansible/.env.acr-output"
 }

@@ -18,7 +18,7 @@ resource "azurerm_subnet" "subnet" {
 }
 
 resource "azurerm_network_interface" "nic" {
-  name                = format("%s/%s",local.resource_group_name,"app-vm-nic")
+  name                = format("%s-%s",local.app_vm_name,"nic")
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
 
@@ -26,20 +26,20 @@ resource "azurerm_network_interface" "nic" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.subnet.id
     private_ip_address_allocation = "Static"
-    private_ip_address            = "10.0.0.2"
+    private_ip_address            = "10.0.0.10"
     public_ip_address_id          = azurerm_public_ip.app-public-ip.id
   }
 }
 
 resource "azurerm_public_ip" "app-public-ip" {
-  name                = "cp2-app-vm-ip"
+  name                = format("%s-%s",local.app_vm_name,"ip")
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   allocation_method   = "Static"
 }
 
 resource "azurerm_linux_virtual_machine" "app-vm" {
-  name                = local.vm_name
+  name                = local.app_vm_name
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
   size                = "Standard_E2s_v3"
@@ -50,7 +50,7 @@ resource "azurerm_linux_virtual_machine" "app-vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file(".ssh/az-public-key.pem")
+    public_key = file("../.ssh/az-public-key.pem")
   }
 
   os_disk {
