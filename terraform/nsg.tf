@@ -38,6 +38,18 @@ security_rule {
     source_address_prefix      = local.personal_ip_address
     destination_address_prefix = "10.0.0.14"
   }
+
+    security_rule {
+    name                       = "App-access"
+    priority                   = 130
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = local.personal_ip_address
+    destination_address_prefix = "10.0.0.10"
+  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "nsg-sn" {
