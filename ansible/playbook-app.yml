@@ -1,18 +1,96 @@
-- name: 'Setup app VM'
+- name: 'Setup App-vm'
   hosts: app-vm
-  remote-user: azureuser
   become: true
+  vars_files:
+    - acr-output.yml
   tasks:
     - name: 'Install podman'
       ansible.builtin.apt:
         name: podman=4.9.3+ds1-1ubuntu0.2
         state: present
         update_cache: true
+
+    - name: 'Download podlet tar file'
+      ansible.builtin.get_url:
+        url: https://github.com/containers/podlet/releases/download/v0.3.2/podlet-x86_64-unknown-linux-gnu.tar.xz
+        dest: /usr/bin/
+    
+    - name: 'Extract podlet from tar file'
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: /usr/bin/podlet-x86_64-unknown-linux-gnu.tar.xz
+        dest: /usr/bin/
+
+    - name: 'Set podlet as usable executable'
+      ansible.builtin.copy:
+        remote_src: true
+        src: /usr/bin/podlet-x86_64-unknown-linux-gnu/podlet
+        dest: /usr/bin/
+
+    - name: 'Add executable permissions for podlet'
+      ansible.builtin.file:
+        path: /usr/bin/podlet
+        mode: 755
+    
+    - name: 'Remove podlet.tar file'
+      ansible.builtin.file:
+        path: /usr/bin/podlet-x86_64-unknown-linux-gnu.tar.xz
+        state: absent
+    
+    - name: 'Add docker.io to insecure registries'
+      ansible.builtin.lineinfile:
+        path: /etc/containers/registries.conf
+        line: unqualified-search-registries = ["docker.io"]
+    
+    - name: 'Create data-dir for REDIS server'
+      ansible.builtin.file:
+        path: /root/redis
+        state: directory
+
+    - name: 'Setup REDIS server'  
+      ansible.builtin.command:
+        chdir: /etc/containers/systemd
+        cmd: podlet --file --install --name redis --overwrite podman run --detach=true --restart always -p 6379:6379 --volume /root/redis:/data redis:alpine
+
+    - name: 'Create data-dir for Mariadb server'
+      ansible.builtin.file:
+        path: /root/mariadb
+        state: directory
+
+    - name: 'Setup Mariadb server'
+      ansible.builtin.command:
+        chdir: /etc/containers/systemd
+        cmd: podlet --file --install --name mariadb --overwrite podman run --detach=true --restart always --env 'MARIADB_ROOT_PASSWORD={{ root_db_password }}' -p 3306:3306 --volume /root/mariadb:/var/lib/mysql mariadb:10.6
     
     - name: 'Login to ACR'
       ansible.builtin.command:
-        cmd: podman login cp2-registry.azurecr.io -u cp2-registry -p var.acrPassword
+        cmd: "podman login {{ acr_login_url }} -u {{ acr_username }} -p {{ acr_password }}"
     
     - name: 'Obtain App image'
       ansible.builtin.command:
-        cmd: podman pull cp2-registry.azurecr.io/techsavies:1.0.0
+        cmd: "podman pull {{ acr_login_url }}/techsavies-ssl:casopractico2"
+
+    - name: 'Setting up app as a service'
+      ansible.builtin.command:
+        chdir: /etc/containers/systemd
+        cmd: podlet --file --install --name techsavies --overwrite podman run --detach=true --network=host --restart always {{ acr_login_url }}/techsavies-ssl:casopractico2
+
+    - name: 'Reload services daemon'
+      ansible.builtin.command:
+        cmd: systemctl daemon-reload
+    
+    - name: 'Start mariadb'
+      ansible.builtin.command:
+        cmd: service mariadb restart
+
+    - name: 'Start redis'
+      ansible.builtin.command:
+        cmd: service redis restart
+    
+    - name: 'Create Laravel DB'
+      ansible.builtin.command:
+        cmd: podman exec -ti systemd-mariadb mysql -u root -p{{ root_db_password }} -e 'create database laravel;'
+
+    - name: 'Start app service'
+      ansible.builtin.command:
+        cmd: service techsavies restart

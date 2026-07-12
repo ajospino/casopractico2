@@ -1,0 +1,69 @@
+- name: AKS deployment and setup
+  hosts: localhost
+  vars_files:
+    - acr-output.yml
+  vars:
+    app_name: "webserver-ruby"
+    pvc_size: "1Gi"
+    storage_class: "managed-csi"
+
+  tasks:
+    - name: Create PVC
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: "{{ app_name }}-data-pvc"
+          spec:
+            accessModes: ["ReadWriteMany"]
+            storageClassName: "{{ storage_class }}"
+            resources:
+              requests:
+                storage: "{{ pvc_size }}"
+
+    - name: Create Deployment
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: "{{ app_name }}"
+            labels: { app: "{{ app_name }}" }
+          spec:
+            replicas: 1
+            selector:
+              matchLabels: { app: "{{ app_name }}" }
+            template:
+              metadata:
+                labels: { app: "{{ app_name }}" }
+              spec:
+                containers:
+                  - name: "{{ app_name }}"
+                    image: "{{ app_image }}"
+                    ports:
+                      - containerPort: 3000
+                    volumeMounts:
+                      - name: db
+                        mountPath: "/webserver-ruby/db/"
+                volumes:
+                  - name: db
+                    persistentVolumeClaim:
+                      claimName: "{{ app_name }}-data-pvc"
+
+    - name: Create LoadBalancer for app access
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: "{{ app_name }}-svc"
+          spec:
+            type: LoadBalancer
+            selector: { app: "{{ app_name }}" }
+            ports:
+              - port: 80
+                targetPort: 3000

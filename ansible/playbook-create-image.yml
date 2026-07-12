@@ -1,0 +1,32 @@
+- name: 'Push image to ACR'
+  hosts: localhost
+  vars_files:
+    - acr-output.yml
+  tasks:  
+    - name: 'Login to ACR'
+      ansible.builtin.command:
+        cmd: "podman login {{ acr_login_url }} -u {{ acr_username }} -p {{ acr_password }}"
+    
+    - name: 'Load previously prepared app-image'
+      ansible.builtin.command:
+        cmd: "podman load -i local-version-techsavies-ssl.tar.gz"
+
+    - name: 'Load previously prepared aks-app-image'
+      ansible.builtin.command:
+        cmd: "podman load -i webserver-ruby.tar.gz"    
+
+    - name: 'Tag aks-app-image for ACR'
+      ansible.builtin.command:
+        cmd: "podman tag localhost/techsavies-ssl:casopractico2 {{ acr_login_url }}/techsavies-ssl:casopractico2"
+
+    - name: 'Tag app-image for ACR'
+      ansible.builtin.command:
+        cmd: "podman tag localhost/ruby-webserver:casopractico2 {{ acr_login_url }}/ruby-webserver:casopractico2"
+
+    - name: 'Push app-image to ACR'
+      ansible.builtin.command:
+        cmd: "podman image push {{ acr_login_url }}/techsavies-ssl:casopractico2"
+
+    - name: 'Push aks-app-image to ACR'
+      ansible.builtin.command:
+        cmd: "podman image push {{ acr_login_url }}/ruby-webserver:casopractico2"
