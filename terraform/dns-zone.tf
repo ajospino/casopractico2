@@ -1,5 +1,5 @@
 resource "azurerm_dns_zone" "domain-dns" {
-  name                = "techsavies.shop"
+  name                = local.personal_domain
   resource_group_name = azurerm_resource_group.rg.name
 }
 
