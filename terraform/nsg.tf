@@ -12,7 +12,7 @@ security_rule {
     source_port_range          = "*"
     destination_port_range     = "22"
     source_address_prefix      = local.personal_ip_address
-    destination_address_prefixes = ["10.0.0.10","10.0.0.14"]
+    destination_address_prefix = "10.0.0.10"
 }
 
   security_rule {
@@ -24,7 +24,7 @@ security_rule {
     source_port_range          = "*"
     destination_port_range     = "3306"
     source_address_prefix      = local.personal_ip_address
-    destination_address_prefix = "10.0.0.14"
+    destination_address_prefix = "10.0.0.10"
   }
 
     security_rule {
@@ -36,7 +36,7 @@ security_rule {
     source_port_range          = "*"
     destination_port_range     = "6379"
     source_address_prefix      = local.personal_ip_address
-    destination_address_prefix = "10.0.0.14"
+    destination_address_prefix = "10.0.0.10"
   }
 
     security_rule {
@@ -46,7 +46,7 @@ security_rule {
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_range     = "80"
+    destination_port_ranges    = ["80","443"]
     source_address_prefix      = local.personal_ip_address
     destination_address_prefix = "10.0.0.10"
   }
