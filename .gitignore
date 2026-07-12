@@ -1,4 +1,8 @@
-*.env
+terraform/.env
+ansible/inventory
+*-output*
 *.terraform*
 *.ssh*
 *.tfstate*
+*tfplan*
+*.tar.gz
