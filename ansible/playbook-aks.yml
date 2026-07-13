@@ -1,14 +1,9 @@
 - name: AKS deployment and setup
   hosts: localhost
   vars_files:
-    - acr-output.yml
-  vars:
-    app_name: "webserver-ruby"
-    pvc_size: "1Gi"
-    storage_class: "managed-csi"
-
+    - variables.yml
   tasks:
-    - name: Create PVC
+    - name: 'Create PVC'
       kubernetes.core.k8s:
         state: present
         definition:
@@ -16,14 +11,15 @@
           kind: PersistentVolumeClaim
           metadata:
             name: "{{ app_name }}-data-pvc"
+            namespace: "cp2-ns"
           spec:
-            accessModes: ["ReadWriteMany"]
+            accessModes: ["ReadWriteOnce"]
             storageClassName: "{{ storage_class }}"
             resources:
               requests:
                 storage: "{{ pvc_size }}"
 
-    - name: Create Deployment
+    - name: 'Create Deployment'
       kubernetes.core.k8s:
         state: present
         definition:
@@ -32,6 +28,7 @@
           metadata:
             name: "{{ app_name }}"
             labels: { app: "{{ app_name }}" }
+            namespace: "cp2-ns"
           spec:
             replicas: 1
             selector:
@@ -53,14 +50,15 @@
                     persistentVolumeClaim:
                       claimName: "{{ app_name }}-data-pvc"
 
-    - name: Create LoadBalancer for app access
+    - name: 'Create LoadBalancer for app access'
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: v1
           kind: Service
           metadata:
-            name: "{{ app_name }}-svc"
+            name: "{{ app_name }}-lb"
+            namespace: "cp2-ns"
           spec:
             type: LoadBalancer
             selector: { app: "{{ app_name }}" }

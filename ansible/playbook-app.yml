@@ -2,7 +2,7 @@
   hosts: app-vm
   become: true
   vars_files:
-    - acr-output.yml
+    - variables.yml
   tasks:
     - name: 'Install podman'
       ansible.builtin.apt:
@@ -63,12 +63,15 @@
         cmd: podlet --file --install --name mariadb --overwrite podman run --detach=true --restart always --env 'MARIADB_ROOT_PASSWORD={{ root_db_password }}' -p 3306:3306 --volume /root/mariadb:/var/lib/mysql mariadb:10.6
     
     - name: 'Login to ACR'
-      ansible.builtin.command:
-        cmd: "podman login {{ acr_login_url }} -u {{ acr_username }} -p {{ acr_password }}"
+      containers.podman.podman_login:
+        username: "{{ acr_username }}"
+        password: "{{ acr_password }}"
+        registry: "{{ acr_login_url }}"
     
     - name: 'Obtain App image'
-      ansible.builtin.command:
-        cmd: "podman pull {{ acr_login_url }}/techsavies-ssl:casopractico2"
+      containers.podman.podman_image:
+        name: "{{ acr_login_url }}/techsavies-ssl:casopractico2"
+        pull: true
 
     - name: 'Setting up app as a service'
       ansible.builtin.command:
@@ -76,21 +79,26 @@
         cmd: podlet --file --install --name techsavies --overwrite podman run --detach=true --network=host --restart always {{ acr_login_url }}/techsavies-ssl:casopractico2
 
     - name: 'Reload services daemon'
-      ansible.builtin.command:
-        cmd: systemctl daemon-reload
+      ansible.builtin.systemd_service:
+        daemon_reload: true
     
     - name: 'Start mariadb'
-      ansible.builtin.command:
-        cmd: service mariadb restart
+      ansible.builtin.systemd_service:
+        name: mariadb
+        state: started 
 
     - name: 'Start redis'
-      ansible.builtin.command:
-        cmd: service redis restart
+      ansible.builtin.systemd_service:
+        name: redis
+        state: started
     
     - name: 'Create Laravel DB'
-      ansible.builtin.command:
-        cmd: podman exec -ti systemd-mariadb mysql -u root -p{{ root_db_password }} -e 'create database laravel;'
+      containers.podman.podman_container_exec:
+        name: systemd-mariadb
+        command: mysql -u root -p{{ root_db_password }} -e 'create database laravel;'
+        tty: true
 
     - name: 'Start app service'
-      ansible.builtin.command:
-        cmd: service techsavies restart
+      ansible.builtin.systemd_service:
+        name: techsavies
+        state: started
