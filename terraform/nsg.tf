@@ -47,8 +47,12 @@ security_rule {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_ranges    = ["80","443"]
-    source_address_prefix      = local.personal_ip_address
+    source_address_prefix      = "*"
     destination_address_prefix = "10.0.0.10"
+  }
+
+    tags = {
+    environment = "casopractico2"
   }
 }
 

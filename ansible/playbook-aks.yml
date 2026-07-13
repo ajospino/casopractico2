@@ -3,6 +3,13 @@
   vars_files:
     - variables.yml
   tasks:
+    - name: Create namespace
+      kubernetes.core.k8s:
+        name: "cp2-ns"
+        api_version: v1
+        kind: Namespace
+        state: present
+        
     - name: 'Create PVC'
       kubernetes.core.k8s:
         state: present

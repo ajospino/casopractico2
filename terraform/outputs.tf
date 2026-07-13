@@ -32,6 +32,7 @@ resource "local_file" "private-ssh-key" {
      private_ssh_key = tls_private_key.admin_ssh_key.private_key_openssh
     }
   )
+  file_permission = 0600
   filename = "../ssh/az-cp2-private-key.pem"
 }
 
@@ -41,5 +42,6 @@ resource "local_file" "public-ssh-key" {
      public_ssh_key = tls_private_key.admin_ssh_key.public_key_openssh
     }
   )
+  file_permission = 0600
   filename = "../ssh/az-cp2-public-key.pem"
 }

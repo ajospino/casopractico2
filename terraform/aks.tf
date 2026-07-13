@@ -14,6 +14,10 @@ resource "azurerm_kubernetes_cluster" "aks-cluster"{
   identity {
     type = "SystemAssigned"
   }
+
+  tags = {
+    environment = "casopractico2"
+  }
 }
 
 resource "azurerm_role_assignment" "kube_acr_role" {

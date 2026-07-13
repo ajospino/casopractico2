@@ -1,6 +1,10 @@
 resource "azurerm_dns_zone" "domain-dns" {
   name                = local.personal_domain
   resource_group_name = azurerm_resource_group.rg.name
+  
+  tags = {
+    environment = "casopractico2"
+  }
 }
 
 resource "azurerm_dns_a_record" "app-record" {
