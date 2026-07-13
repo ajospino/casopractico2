@@ -1,6 +1,5 @@
 terraform/.env
 ansible/inventory
-*-output*
 *.terraform*
 *.ssh*
 *.tfstate*
