@@ -38,6 +38,10 @@ resource "azurerm_public_ip" "app-public-ip" {
   allocation_method   = "Static"
 }
 
+resource "tls_private_key" "admin_ssh_key" {
+  algorithm = "ED25519"
+}
+
 resource "azurerm_linux_virtual_machine" "app-vm" {
   name                = local.app_vm_name
   resource_group_name = azurerm_resource_group.rg.name
@@ -50,7 +54,7 @@ resource "azurerm_linux_virtual_machine" "app-vm" {
 
   admin_ssh_key {
     username   = "azureuser"
-    public_key = file("../.ssh/az-public-key.pem")
+    public_key = tls_private_key.admin_ssh_key.public_key_openssh
   }
 
   os_disk {
