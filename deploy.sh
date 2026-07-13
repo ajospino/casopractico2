@@ -1,9 +1,9 @@
 #!/bin/bash
 cd terraform/
-tofu init 
-tofu plan -out cp2.tfplan
-tofu apply --auto-approve cp2.tfplan
-az aks get-credentials --resource-group $(tofu output -raw resource_group_name) --name $(tofu output -raw kubernetes_cluster_name)
+terraform init 
+terraform plan -out cp2.tfplan
+terraform apply --auto-approve cp2.tfplan
+az aks get-credentials --resource-group $(terraform output -raw resource_group_name) --name $(terraform output -raw kubernetes_cluster_name)
 
 cd ../ansible
 ansible-playbook playbook-create-image.yml
